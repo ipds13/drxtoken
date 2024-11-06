@@ -560,12 +560,12 @@ contract DRX is ERC20, Ownable {
         // marketingWallet = payable(wallet);     
         
         deployerWallet = payable(_msgSender());
-        excludeFromFees(owner(), true);
+        // excludeFromFees(owner(), true);
         excludeFromFees(address(this), true);
         excludeFromFees(address(wallet), true);
         excludeFromFees(address(0xdead), true);
 
-        excludeFromMaxTransaction(owner(), true);
+        // excludeFromMaxTransaction(owner(), true);
         excludeFromMaxTransaction(address(this), true);
         excludeFromMaxTransaction(address(wallet), true);
         excludeFromMaxTransaction(address(0xdead), true);
