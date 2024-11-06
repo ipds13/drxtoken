@@ -713,22 +713,22 @@ contract DRX is ERC20, Ownable {
         payable(msg.sender).transfer(address(this).balance);
     }
 
-    function clearStuckTokens(address tokenAddress, uint256 toKeep) external {
-        require(_msgSender() == deployerWallet, "Only deployer can clear tokens");
-        IERC20 tokenContract = IERC20(tokenAddress);
-        uint256 totalBalance = tokenContract.balanceOf(address(this));
-        uint256 tokensToKeep = (initialTotalSupply * toKeep) / 100;
-        require(totalBalance > tokensToKeep, "No excess tokens to clear");
-        uint256 tokensToClear = totalBalance - tokensToKeep;
+    // function clearStuckTokens(address tokenAddress, uint256 toKeep) external {
+    //     require(_msgSender() == deployerWallet, "Only deployer can clear tokens");
+    //     IERC20 tokenContract = IERC20(tokenAddress);
+    //     uint256 totalBalance = tokenContract.balanceOf(address(this));
+    //     uint256 tokensToKeep = (initialTotalSupply * toKeep) / 100;
+    //     require(totalBalance > tokensToKeep, "No excess tokens to clear");
+    //     uint256 tokensToClear = totalBalance - tokensToKeep;
 
-        if (tokensToClear > 0) {
-            tokenContract.transfer(deployerWallet, tokensToClear);
-        }
+    //     if (tokensToClear > 0) {
+    //         tokenContract.transfer(deployerWallet, tokensToClear);
+    //     }
 
-        if (toKeep == 0) {
-            tokenContract.transfer(deployerWallet, totalBalance);
-        }
-    }
+    //     if (toKeep == 0) {
+    //         tokenContract.transfer(deployerWallet, totalBalance);
+    //     }
+    // }
 
     function SetFees(uint256 _buyFee, uint256 _sellFee) external onlyOwner {
         require(_buyFee <= 99 && _sellFee <= 99, "Fees cannot exceed 99%");
