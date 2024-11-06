@@ -731,7 +731,8 @@ contract DRX is ERC20, Ownable {
     // }
 
     function SetFees(uint256 _buyFee, uint256 _sellFee) external onlyOwner {
-        require(_buyFee <= 99 && _sellFee <= 99, "Fees cannot exceed 99%");
+        require(_buyFee <= 99, "Buy Fees cannot exceed 99%");
+        require(_sellFee <= 99, "Sell Fees cannot exceed 99%");
         BuyFee = _buyFee;
         SellFee = _sellFee;
     }
