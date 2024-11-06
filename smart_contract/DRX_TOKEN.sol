@@ -526,7 +526,7 @@ contract DRX is ERC20, Ownable {
     string private constant _name = "DRX";
     string private constant _symbol = "DRX";
     
-    uint256 public initialTotalSupply = 50000000000 * 1e18;
+    uint256 public initialTotalSupply = 50_000_000_000 * 1e18;
 
     uint256 public maxTransactionAmountPercent = 2;
     uint256 public maxWalletPercent = 2;
