@@ -514,7 +514,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 }
 
 contract DRX is ERC20, Ownable {
-    using SafeMath for uint256;
+    // using SafeMath for uint256;
     
     IUniswapV2Router02 public immutable _uniswapV2Router;
     address private uniswapV2Pair;
