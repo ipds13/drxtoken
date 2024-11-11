@@ -192,88 +192,6 @@ interface IUniswapV2Factory {
     function setFeeToSetter(address) external;
 }
 
-library SafeMath {
-
-    function tryAdd(uint256 a, uint256 b) internal pure returns (bool, uint256) {
-        unchecked {
-            uint256 c = a + b;
-            if (c < a) return (false, 0);
-            return (true, c);
-        }
-    }
-
-    function trySub(uint256 a, uint256 b) internal pure returns (bool, uint256) {
-        unchecked {
-            if (b > a) return (false, 0);
-            return (true, a - b);
-        }
-    }
-
-    function tryMul(uint256 a, uint256 b) internal pure returns (bool, uint256) {
-        unchecked {
-            if (a == 0) return (true, 0);
-            uint256 c = a * b;
-            if (c / a != b) return (false, 0);
-            return (true, c);
-        }
-    }
-
-    function tryDiv(uint256 a, uint256 b) internal pure returns (bool, uint256) {
-        unchecked {
-            if (b == 0) return (false, 0);
-            return (true, a / b);
-        }
-    }
-
-    function tryMod(uint256 a, uint256 b) internal pure returns (bool, uint256) {
-        unchecked {
-            if (b == 0) return (false, 0);
-            return (true, a % b);
-        }
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a + b;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a - b;
-    }
-
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a * b;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a / b;
-    }
-
-    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a % b;
-    }
-
-    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
-        unchecked {
-            require(b <= a, errorMessage);
-            return a - b;
-        }
-    }
-
-    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
-        unchecked {
-            require(b > 0, errorMessage);
-            return a / b;
-        }
-    }
-
-    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
-        unchecked {
-            require(b > 0, errorMessage);
-            return a % b;
-        }
-    }
-}
-
 interface IERC20 {
 
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -308,6 +226,7 @@ abstract contract Ownable is Context {
     address private _owner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipProposed(address indexed proposedOwner);
 
     constructor() {
         _transferOwnership(_msgSender());
@@ -330,15 +249,29 @@ abstract contract Ownable is Context {
         _transferOwnership(address(0));
     }
 
-    function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
-        _transferOwnership(newOwner);
+    // function transferOwnership(address newOwner) public virtual onlyOwner {
+    //     require(newOwner != address(0), "Ownable: new owner is the zero address");
+    //     _transferOwnership(newOwner);
+    // }
+
+    // function _transferOwnership(address newOwner) internal virtual {
+    //     address oldOwner = _owner;
+    //     _owner = newOwner;
+    //     emit OwnershipTransferred(oldOwner, newOwner);
+    // }
+
+     function proposeNewOwner(address newOwner) public onlyOwner {
+        require(newOwner != address(0), "Alamat pemilik baru tidak valid");
+        _proposedOwner = newOwner;
+        emit OwnershipProposed(newOwner);
     }
 
-    function _transferOwnership(address newOwner) internal virtual {
-        address oldOwner = _owner;
-        _owner = newOwner;
-        emit OwnershipTransferred(oldOwner, newOwner);
+    //Function to accept ownership by the proposed new owner
+    function acceptOwnership() public {
+        require(msg.sender == _proposedOwner, "Only the new owner who proposes can receive ownership.");
+        emit OwnershipTransferred(_owner, _proposedOwner);
+        _owner = _proposedOwner;
+        _proposedOwner = address(0);
     }
 }
 
@@ -514,37 +447,38 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 }
 
 contract DRX is ERC20, Ownable {
-    // using SafeMath for uint256;
     
     IUniswapV2Router02 public immutable _uniswapV2Router;
-    address private uniswapV2Pair;
-    address private deployerWallet;
-    address private marketingWallet = payable(address(0xA733654C456066E1c0933E8C2d18945531daac44));
+    address private _uniswapV2Pair;
+    address private _deployerWallet;
+    address private constant _marketingWallet = payable(address(0xA733654C456066E1c0933E8C2d18945531daac44));
 
-    bool private swapping;
+    uint256 private constant true = 1;
+    uint256 private constant false = 2;
+    uint256 private swapping;
 
     string private constant _name = "DRX";
     string private constant _symbol = "DRX";
     
-    uint256 public initialTotalSupply = 50_000_000_000 * 1e18;
+    uint256 public constant initialTotalSupply = 50_000_000_000 * 1e18;
 
-    uint256 public maxTransactionAmountPercent = 2;
-    uint256 public maxWalletPercent = 2;
-    uint256 public swapTokensAtAmountPercent = 1;
+    uint256 public constant maxTransactionAmountPercent = 2;
+    uint256 public constant maxWalletPercent = 2;
+    uint256 public constant swapTokensAtAmountPercent = 1;
 
     uint256 public maxTransactionAmount;
     uint256 public maxWallet;
     uint256 public swapTokensAtAmount;
 
-    bool public tradingOpen = false;
+    bool private constant tradingOpen = true;
 
     uint256 public BuyFee = 1;
     uint256 public SellFee = 1;
 
-    mapping(address => bool) private _isExcludedFromFees;
-    mapping(address => bool) private _isExcludedMaxTransactionAmount;
-    mapping(address => bool) private automatedMarketMakerPairs;
-    mapping(address => bool) private bots;
+    mapping(address => uint256) private _isExcludedFromFees;
+    mapping(address => uint256) private _isExcludedMaxTransactionAmount;
+    mapping(address => uint256) private automatedMarketMakerPairs;
+    mapping(address => uint256) private bots;
 
     event ExcludeFromFees(address indexed account, bool isExcluded);
     event SetAutomatedMarketMakerPair(address indexed pair, bool indexed value);
@@ -553,13 +487,13 @@ contract DRX is ERC20, Ownable {
 
         _uniswapV2Router = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);//eth mainet
         //  _uniswapV2Router = IUniswapV2Router02(0x86dcd3293C53Cf8EFd7303B57beb2a3F671dDE98); // sepolia tesnet
-        uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(address(this), _uniswapV2Router.WETH());
-        _setAutomatedMarketMakerPair(address(uniswapV2Pair), true);
-        excludeFromMaxTransaction(address(uniswapV2Pair), true);
+        _uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(address(this), _uniswapV2Router.WETH());
+        _setAutomatedMarketMakerPair(address(_uniswapV2Pair), true);
+        excludeFromMaxTransaction(address(_uniswapV2Pair), true);
         excludeFromMaxTransaction(address(_uniswapV2Router), true);
-        // marketingWallet = payable(wallet);     
+        // _marketingWallet = payable(wallet);     
         
-        deployerWallet = payable(_msgSender());
+        _deployerWallet = payable(_msgSender());
         // excludeFromFees(owner(), true);
         excludeFromFees(address(this), true);
         excludeFromFees(address(wallet), true);
@@ -574,14 +508,11 @@ contract DRX is ERC20, Ownable {
         maxWallet = initialTotalSupply * maxWalletPercent / 100;
         swapTokensAtAmount = initialTotalSupply * swapTokensAtAmountPercent / 100;
 
-        _mint(deployerWallet, initialTotalSupply);
+        _mint(_deployerWallet, initialTotalSupply);
     }
 
     receive() external payable {}
 
-    function openTrading() external onlyOwner() {
-        tradingOpen = true;
-    }
 
     function excludeFromMaxTransaction(address updAds, bool isEx) private {
         _isExcludedMaxTransactionAmount[updAds] = isEx;
@@ -593,7 +524,7 @@ contract DRX is ERC20, Ownable {
     }
 
     function setAutomatedMarketMakerPair(address pair, bool value) public onlyOwner {
-        require(pair != uniswapV2Pair, "The pair cannot be removed from automatedMarketMakerPairs");
+        require(pair != _uniswapV2Pair, "The pair cannot be removed from automatedMarketMakerPairs");
         _setAutomatedMarketMakerPair(pair, value);
     }
 
@@ -674,6 +605,7 @@ contract DRX is ERC20, Ownable {
     }
 
     function swapTokensForEth(uint256 tokenAmount) private {
+        require(tokenAmount > 0, "Input count must be greater than 0");
 
         address[] memory path = new address[](2);
         path[0] = address(this);
@@ -685,7 +617,7 @@ contract DRX is ERC20, Ownable {
             tokenAmount,
             0,
             path,
-            marketingWallet,
+            _marketingWallet,
             block.timestamp
         );
     }
@@ -708,27 +640,10 @@ contract DRX is ERC20, Ownable {
     }
 
     function clearStuckEth() external {
-        require(_msgSender() == deployerWallet);
+        require(_msgSender() == _deployerWallet, " Ownable: caller is not the deployer");
         require(address(this).balance > 0, "Token: no ETH to clear");
         payable(msg.sender).transfer(address(this).balance);
     }
-
-    // function clearStuckTokens(address tokenAddress, uint256 toKeep) external {
-    //     require(_msgSender() == deployerWallet, "Only deployer can clear tokens");
-    //     IERC20 tokenContract = IERC20(tokenAddress);
-    //     uint256 totalBalance = tokenContract.balanceOf(address(this));
-    //     uint256 tokensToKeep = (initialTotalSupply * toKeep) / 100;
-    //     require(totalBalance > tokensToKeep, "No excess tokens to clear");
-    //     uint256 tokensToClear = totalBalance - tokensToKeep;
-
-    //     if (tokensToClear > 0) {
-    //         tokenContract.transfer(deployerWallet, tokensToClear);
-    //     }
-
-    //     if (toKeep == 0) {
-    //         tokenContract.transfer(deployerWallet, totalBalance);
-    //     }
-    // }
 
     function SetFees(uint256 _buyFee, uint256 _sellFee) external onlyOwner {
         require(_buyFee <= 99, "Buy Fees cannot exceed 99%");
